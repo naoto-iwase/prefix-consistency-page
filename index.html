@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- Primary Meta Tags -->
+  <meta name="title" content="Reliable Chain-of-Thought via Prefix Consistency">
+  <meta name="description" content="Reweight majority voting by how often each Chain-of-Thought trace reproduces under regeneration. Reach Standard MV plateau at up to 21× fewer tokens.">
+  <meta name="keywords" content="chain-of-thought, self-consistency, majority voting, test-time scaling, large language models, reasoning, prefix consistency">
+  <meta name="author" content="Naoto Iwase, Yuki Ichihara, Mohammad Atif Quamar, Junpei Komiyama">
+  <meta name="robots" content="index, follow">
+  <meta name="language" content="English">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Komiyama Lab, MBZUAI">
+  <meta property="og:title" content="Reliable Chain-of-Thought via Prefix Consistency">
+  <meta property="og:description" content="Reweight majority voting by how often each Chain-of-Thought trace reproduces under regeneration. Reach Standard MV plateau at up to 21× fewer tokens.">
+  <meta property="og:url" content="https://naoto-iwase.github.io/prefix-consistency-page">
+  <meta property="og:image" content="https://naoto-iwase.github.io/prefix-consistency-page/static/images/social_preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Reliable Chain-of-Thought via Prefix Consistency">
+  <meta property="article:published_time" content="2026-05-08T00:00:00.000Z">
+  <meta property="article:author" content="Naoto Iwase">
+  <meta property="article:section" content="Research">
+  <meta property="article:tag" content="chain-of-thought">
+  <meta property="article:tag" content="self-consistency">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Reliable Chain-of-Thought via Prefix Consistency">
+  <meta name="twitter:description" content="Reweight majority voting by how often each Chain-of-Thought trace reproduces under regeneration. Reach Standard MV plateau at up to 21× fewer tokens.">
+  <meta name="twitter:image" content="https://naoto-iwase.github.io/prefix-consistency-page/static/images/social_preview.png">
+  <meta name="twitter:image:alt" content="Reliable Chain-of-Thought via Prefix Consistency">
+
+  <!-- Academic/Research Specific -->
+  <meta name="citation_title" content="Reliable Chain-of-Thought via Prefix Consistency">
+  <meta name="citation_author" content="Iwase, Naoto">
+  <meta name="citation_author" content="Ichihara, Yuki">
+  <meta name="citation_author" content="Quamar, Mohammad Atif">
+  <meta name="citation_author" content="Komiyama, Junpei">
+  <meta name="citation_publication_date" content="2026">
+  <meta name="citation_conference_title" content="Preprint">
+  <meta name="citation_arxiv_id" content="2605.07654">
+  <meta name="citation_pdf_url" content="https://arxiv.org/pdf/2605.07654">
+  
+  <!-- Additional SEO -->
+  <meta name="theme-color" content="#2563eb">
+  <meta name="msapplication-TileColor" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://ajax.googleapis.com">
+  <link rel="preconnect" href="https://documentcloud.adobe.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+
+  <title>Reliable Chain-of-Thought via Prefix Consistency | Iwase, Ichihara, Quamar, Komiyama</title>
+  
+  <!-- Favicon and App Icons -->
+  <link rel="icon" type="image/svg+xml" href="static/images/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="static/images/favicon.ico">
+  <link rel="apple-touch-icon" href="static/images/apple-touch-icon.png">
+  
+  <!-- Critical CSS - Load synchronously -->
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+  <link rel="stylesheet" href="static/css/correct_vs_wrong.css">
+  <link rel="stylesheet" href="static/css/mv_vs_pcwmv.css">
+  <link rel="stylesheet" href="static/css/cost_accuracy.css">
+
+  <!-- KaTeX (LaTeX rendering for problem statements). The CSS is critical for math glyphs. -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  
+  <!-- Non-critical CSS - Load asynchronously -->
+  <link rel="preload" href="static/css/bulma-carousel.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="static/css/bulma-slider.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="static/css/fontawesome.all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  
+  <!-- Fallback for browsers that don't support preload -->
+  <noscript>
+    <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
+    <link rel="stylesheet" href="static/css/bulma-slider.min.css">
+    <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  </noscript>
+  
+  <!-- Fonts - Optimized loading -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Defer non-critical JavaScript -->
+  <script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="https://documentcloud.adobe.com/view-sdk/main.js"></script>
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script defer src="static/js/bulma-carousel.min.js"></script>
+  <script defer src="static/js/bulma-slider.min.js"></script>
+  <script defer src="static/js/index.js"></script>
+  <!-- KaTeX must load before animation scripts that call renderMathInElement on the prompt. -->
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <script defer src="static/js/correct_vs_wrong.js"></script>
+  <script defer src="static/js/mv_vs_pcwmv.js"></script>
+  <script defer src="static/js/cost_accuracy.js"></script>
+  
+  <!-- Structured Data for Academic Papers -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ScholarlyArticle",
+    "headline": "Reliable Chain-of-Thought via Prefix Consistency",
+    "description": "Reweight majority voting by how often each Chain-of-Thought trace reproduces under regeneration. Reach Standard MV plateau at up to 21× fewer tokens.",
+    "author": [
+      {
+        "@type": "Person",
+        "name": "Naoto Iwase",
+        "affiliation": { "@type": "Organization", "name": "Nagoya University" }
+      },
+      {
+        "@type": "Person",
+        "name": "Yuki Ichihara",
+        "affiliation": { "@type": "Organization", "name": "Nara Institute of Science and Technology, MBZUAI" }
+      },
+      {
+        "@type": "Person",
+        "name": "Mohammad Atif Quamar",
+        "affiliation": { "@type": "Organization", "name": "MBZUAI" }
+      },
+      {
+        "@type": "Person",
+        "name": "Junpei Komiyama",
+        "affiliation": { "@type": "Organization", "name": "MBZUAI, RIKEN AIP" }
+      }
+    ],
+    "datePublished": "2026-05-08",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Preprint"
+    },
+    "url": "https://naoto-iwase.github.io/prefix-consistency-page",
+    "image": "https://naoto-iwase.github.io/prefix-consistency-page/static/images/social_preview.png",
+    "keywords": ["chain-of-thought", "self-consistency", "majority voting", "test-time scaling", "large language models", "reasoning"],
+    "abstract": "Large Language Models often improve accuracy on reasoning tasks by sampling multiple Chain-of-Thought traces and aggregating them with majority voting, a test-time technique called self-consistency. When we truncate a CoT partway through and regenerate the remainder, we observe that traces with correct answers reproduce their original answer more often than traces with wrong answers. We use this difference as a reliability signal, prefix consistency, that weights each candidate answer by how often it reappears under regeneration. It requires no access to token log-probabilities or self-rating prompts. Across five reasoning models and four math and science benchmarks, prefix consistency is the best correctness predictor in most settings, and reweighting votes by it reaches Standard MV plateau accuracy at up to 21x fewer tokens (median 4.6x).",
+    "isAccessibleForFree": true,
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "mainEntity": {
+      "@type": "WebPage",
+      "@id": "https://naoto-iwase.github.io/prefix-consistency-page"
+    },
+    "about": [
+      { "@type": "Thing", "name": "Chain-of-Thought reasoning" },
+      { "@type": "Thing", "name": "Self-consistency" }
+    ]
+  }
+  </script>
+
+  <!-- Website/Organization Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Komiyama Lab, MBZUAI",
+    "url": "https://jkomiyama.github.io/",
+    "logo": "https://naoto-iwase.github.io/prefix-consistency-page/static/images/favicon.ico",
+    "sameAs": [
+      "https://github.com/MBZUAI-reasoninglab"
+    ]
+  }
+  </script>
+
+  <!-- Project-page-specific styles. Kept inline for now; move to static/css/index.css later if it grows. -->
+  <style>
+    .big-stats-section { padding: 2.5rem 1.5rem; }
+    .big-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      text-align: center;
+    }
+    @media (max-width: 900px) {
+      .big-stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .big-stat {
+      padding: 1.25rem 0.75rem;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+      border: 1px solid #e3e8f0;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .big-stat:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(37, 99, 235, 0.10);
+    }
+    .big-stat-value {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1.05;
+      color: #2563eb;
+      font-feature-settings: "tnum" 1;
+      letter-spacing: -0.02em;
+    }
+    .big-stat-unit {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-left: 0.05em;
+    }
+    .big-stat-label {
+      margin-top: 0.5rem;
+      font-size: 0.95rem;
+      color: #4b5563;
+      line-height: 1.35;
+    }
+    .big-stat-sub {
+      display: inline-block;
+      margin-top: 0.15rem;
+      font-size: 0.82rem;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+
+
+  <!-- Scroll to Top Button -->
+  <button class="scroll-to-top" onclick="scrollToTop()" title="Scroll to top" aria-label="Scroll to top">
+    <i class="fas fa-chevron-up"></i>
+  </button>
+
+  <!-- More Works Dropdown: disabled until we have a curated list of lab works to link.
+  <div class="more-works-container">
+    <button class="more-works-btn" onclick="toggleMoreWorks()" title="View More Works from Our Lab">
+      <i class="fas fa-flask"></i>
+      More Works
+      <i class="fas fa-chevron-down dropdown-arrow"></i>
+    </button>
+    <div class="more-works-dropdown" id="moreWorksDropdown">
+      <div class="dropdown-header">
+        <h4>More Works from Our Lab</h4>
+        <button class="close-btn" onclick="toggleMoreWorks()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="works-list">
+        <a href="https://arxiv.org/abs/PAPER_ID_1" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>Paper Title 1</h5>
+            <p>Brief description of the work and its main contribution.</p>
+            <span class="work-venue">Conference/Journal 2024</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://arxiv.org/abs/PAPER_ID_2" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>Paper Title 2</h5>
+            <p>Brief description of the work and its main contribution.</p>
+            <span class="work-venue">Conference/Journal 2023</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://arxiv.org/abs/PAPER_ID_3" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>Paper Title 3</h5>
+            <p>Brief description of the work and its main contribution.</p>
+            <span class="work-venue">Conference/Journal 2023</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  -->
+
+  <main id="main-content">
+  <section class="hero publication-header">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <h1 class="title is-1 publication-title" style="text-wrap: balance;">Reliable Chain-of-Thought via <span style="white-space: nowrap;">Prefix Consistency</span></h1>
+
+            <!-- TL;DR disabled per review. Restore by uncommenting if reintroduced.
+            <h2 class="subtitle is-4 publication-tldr" style="margin-top:0.6em;">
+              Reach majority voting plateau at up to 21x fewer tokens. No logits, no self-rating.
+            </h2>
+            -->
+
+            <div class="is-size-5 publication-authors">
+              <span class="author-block">
+                <a href="https://iwase.dev/" target="_blank">Naoto Iwase</a><sup>1</sup>,</span>
+              <span class="author-block">
+                <a href="https://yu-ki3406.github.io/ichihara/index.en.html" target="_blank">Yuki Ichihara</a><sup>2,3</sup>,</span>
+              <span class="author-block">
+                <a href="https://www.atifquamar.com/" target="_blank">Mohammad Atif Quamar</a><sup>3</sup>,</span>
+              <span class="author-block">
+                <a href="https://jkomiyama.github.io/" target="_blank">Junpei Komiyama</a><sup>3,4</sup>
+              </span>
+            </div>
+
+            <div class="is-size-5 publication-authors">
+              <span class="author-block">
+                <sup>1</sup>Nagoya University &nbsp;
+                <sup>2</sup>NAIST &nbsp;
+                <sup>3</sup>MBZUAI &nbsp;
+                <sup>4</sup>RIKEN AIP
+              </span>
+              <br>
+              <span class="author-block">Preprint, 2026</span>
+            </div>
+
+            <div class="column has-text-centered">
+              <div class="publication-links">
+                <!-- Paper PDF button disabled. Restore once an arXiv ID exists.
+                <span class="link-block">
+                  <a href="#" target="_blank"
+                     class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-file-pdf"></i></span>
+                    <span>Paper</span>
+                  </a>
+                </span>
+                -->
+
+                <span class="link-block">
+                  <a href="https://arxiv.org/abs/2605.07654" target="_blank"
+                     class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="ai ai-arxiv"></i></span>
+                    <span>arXiv</span>
+                  </a>
+                </span>
+
+                <!-- Code -->
+                <span class="link-block">
+                  <a href="https://github.com/naoto-iwase/prefix-consistency" target="_blank"
+                     class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fab fa-github"></i></span>
+                    <span>Code</span>
+                  </a>
+                </span>
+
+                <!-- BibTeX anchor button disabled. The BibTeX section sits below and is reachable by scrolling.
+                <span class="link-block">
+                  <a href="#BibTeX"
+                     class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-quote-left"></i></span>
+                    <span>BibTeX</span>
+                  </a>
+                </span>
+                -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</section>
+
+
+<!-- Paper abstract -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Large Language Models often improve accuracy on reasoning tasks by sampling multiple Chain-of-Thought (CoT) traces and aggregating them with majority voting (MV), a test-time technique called self-consistency. When we truncate a CoT partway through and regenerate the remainder, we observe that traces with correct answers reproduce their original answer more often than traces with wrong answers. We use this difference as a reliability signal we call <strong>prefix consistency</strong>, the rate at which a sample's answer reappears under regeneration. Weighting majority voting by it gives <strong>prefix-consistency-weighted majority voting (PC-WMV)</strong>. It requires no access to token log-probabilities or self-rating prompts. Across five reasoning models and four math and science benchmarks, prefix consistency is the best correctness predictor in most settings, and PC-WMV reaches Standard MV plateau accuracy at up to 21&times; fewer tokens (median 4.6&times;).
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- End paper abstract -->
+
+
+<!-- Big Stats panel disabled: read as cheap on first review. CSS and counter JS are kept;
+     restore this block (and only this block) to re-enable.
+<section class="section big-stats-section">
+  <div class="container is-max-desktop">
+    <div class="big-stats-grid">
+      <div class="big-stat">
+        <div class="big-stat-value"><span class="counter" data-target="21" data-decimals="0">0</span><span class="big-stat-unit">&times;</span></div>
+        <div class="big-stat-label">
+          fewer tokens to reach majority voting plateau<br>
+          <span class="big-stat-sub">(max across settings)</span>
+        </div>
+      </div>
+      <div class="big-stat">
+        <div class="big-stat-value"><span class="counter" data-target="4.6" data-decimals="1">0.0</span><span class="big-stat-unit">&times;</span></div>
+        <div class="big-stat-label">
+          median token reduction<br>
+          <span class="big-stat-sub">(over 20 model &times; benchmark settings)</span>
+        </div>
+      </div>
+      <div class="big-stat">
+        <div class="big-stat-value"><span class="counter" data-target="15" data-decimals="0">0</span><span class="big-stat-unit">&thinsp;/&thinsp;20</span></div>
+        <div class="big-stat-label">
+          settings where prefix consistency<br>is the best correctness signal
+        </div>
+      </div>
+      <div class="big-stat">
+        <div class="big-stat-value"><span class="counter" data-target="10" data-decimals="0">0</span><span class="big-stat-unit">&times;</span></div>
+        <div class="big-stat-label">
+          fewer tokens than the best<br>adaptive-stopping baseline
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+-->
+
+<!-- Correct vs Wrong trace: real gpt-oss-20b traces on AIME 2025 #24. JS streams snippets and tallies PC. -->
+<section id="correct-vs-wrong" class="cvw-section">
+  <p class="section-lede">Truncate a CoT partway through, then regenerate the remainder.</p>
+  <h2 class="title is-3 has-text-centered">Correct answers come back. Wrong ones don't.</h2>
+  <div class="cvw-problem">
+    <div class="problem-meta"></div>
+    <div class="problem-text"></div>
+  </div>
+  <div class="cvw-grid"></div>
+  <div class="cvw-controls">
+    <button class="cvw-replay" type="button" aria-label="Replay animation">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3.5-7.13"/><polyline points="3 4 3 10 9 10"/></svg>
+      Replay
+    </button>
+  </div>
+  <p class="cvw-footer">Trace snippets abbreviated from GPT-OSS-20B's output.</p>
+</section>
+
+<!-- MV vs PC-WMV: PC-WMV beats Standard MV on a single problem. Real gpt-oss-20b on HMMT February 2026 #5. -->
+<section id="mv-vs-pcwmv" class="mvpc-section">
+  <p class="section-lede">If correct answers reproduce more, their votes should count more.</p>
+  <h2 class="title is-3 has-text-centered">PC-WMV beats Standard MV.</h2>
+  <div class="mvpc-problem">
+    <div class="problem-meta"></div>
+    <div class="problem-text"></div>
+  </div>
+  <div class="mvpc-stream">
+    <div class="mvpc-stream-label">samples</div>
+    <div class="mvpc-dots"></div>
+    <div class="mvpc-legend"></div>
+  </div>
+  <div class="mvpc-stepper">
+    <div class="step-counter"></div>
+    <div class="step-pair"></div>
+  </div>
+  <div class="mvpc-grid"></div>
+  <div class="mvpc-controls">
+    <button class="mvpc-replay" type="button" aria-label="Replay animation">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3.5-7.13"/><polyline points="3 4 3 10 9 10"/></svg>
+      Replay
+    </button>
+  </div>
+  <p class="mvpc-footer">Samples are taken from GPT-OSS-20B's output.</p>
+</section>
+
+<!-- Cost-accuracy live: PC-WMV reaches Standard MV's plateau much earlier.
+     Real gpt-oss-120b on FrontierScience-Olympiad. -->
+<section id="cost-accuracy" class="ca-section">
+  <p class="ca-headline visible">
+    <strong id="ca-msg">PC-WMV uses <span id="ca-ratio">21&times;</span> fewer tokens than Standard MV.</strong>
+  </p>
+  <div class="ca-panel">
+    <div class="ca-subtitle"></div>
+    <svg class="ca-svg" viewBox="0 0 880 440" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Cost-accuracy curve, log tokens per problem versus accuracy"></svg>
+    <div class="ca-legend"></div>
+  </div>
+</section>
+
+<!-- Teaser video disabled: slot to be replaced by Big Stats panel + Method schematic.
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <video poster="" id="tree" autoplay controls muted loop height="100%" preload="metadata">
+        <source src="static/videos/banner_video.mp4" type="video/mp4">
+      </video>
+      <h2 class="subtitle has-text-centered">
+        Aliquam vitae elit ullamcorper tellus egestas pellentesque. Ut lacus tellus, maximus vel lectus at, placerat pretium mi. Maecenas dignissim tincidunt vestibulum. Sed consequat hendrerit nisl ut maximus.
+      </h2>
+    </div>
+  </div>
+</section>
+-->
+
+
+<!-- Image carousel disabled: slot to be replaced by the Results section (Fig 1 panels + legend).
+<section class="hero is-small">
+  <div class="hero-body">
+    <div class="container">
+      <div id="results-carousel" class="carousel results-carousel">
+       <div class="item">
+        <img src="static/images/carousel1.jpg" alt="First research result visualization" loading="lazy"/>
+        <h2 class="subtitle has-text-centered">
+          First image description.
+        </h2>
+      </div>
+      <div class="item">
+        <img src="static/images/carousel2.jpg" alt="Second research result visualization" loading="lazy"/>
+        <h2 class="subtitle has-text-centered">
+          Second image description.
+        </h2>
+      </div>
+      <div class="item">
+        <img src="static/images/carousel3.jpg" alt="Third research result visualization" loading="lazy"/>
+        <h2 class="subtitle has-text-centered">
+         Third image description.
+       </h2>
+     </div>
+     <div class="item">
+      <img src="static/images/carousel4.jpg" alt="Fourth research result visualization" loading="lazy"/>
+      <h2 class="subtitle has-text-centered">
+        Fourth image description.
+      </h2>
+    </div>
+  </div>
+</div>
+</div>
+</section>
+-->
+
+
+
+
+<!-- YouTube video disabled: no video presentation planned.
+<section class="hero is-small is-light">
+  <div class="hero-body">
+    <div class="container">
+      <h2 class="title is-3">Video Presentation</h2>
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <div class="publication-video">
+            <iframe src="https://www.youtube.com/embed/JkaxUblCGz0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+-->
+
+
+<!-- Video carousel disabled: slot to be replaced by Correct-vs-Wrong trace and Cost-accuracy live.
+<section class="hero is-small">
+  <div class="hero-body">
+    <div class="container">
+      <h2 class="title is-3">Another Carousel</h2>
+      <div id="results-carousel" class="carousel results-carousel">
+        <div class="item item-video1">
+          <video poster="" id="video1" controls muted loop height="100%" preload="metadata">
+            <source src="static/videos/carousel1.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-video2">
+          <video poster="" id="video2" controls muted loop height="100%" preload="metadata">
+            <source src="static/videos/carousel2.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-video3">
+          <video poster="" id="video3" controls muted loop height="100%" preload="metadata">
+            <source src="static/videos/carousel3.mp4" type="video/mp4">
+          </video>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+-->
+
+
+
+
+
+
+<!-- Paper poster disabled: no poster planned for project page.
+<section class="hero is-small is-light">
+  <div class="hero-body">
+    <div class="container">
+      <h2 class="title">Poster</h2>
+      <iframe  src="static/pdfs/sample.pdf" width="100%" height="550">
+          </iframe>
+      </div>
+    </div>
+  </section>
+-->
+
+
+
+<!--BibTex citation -->
+  <section class="section" id="BibTeX">
+    <div class="container is-max-desktop content">
+      <div class="bibtex-header">
+        <h2 class="title">BibTeX</h2>
+        <button class="copy-bibtex-btn" onclick="copyBibTeX()" title="Copy BibTeX to clipboard">
+          <i class="fas fa-copy"></i>
+          <span class="copy-text">Copy</span>
+        </button>
+      </div>
+      <pre id="bibtex-code"><code>@article{iwase2026prefixconsistency,
+  title={Reliable Chain-of-Thought via Prefix Consistency},
+  author={Naoto Iwase and Yuki Ichihara and Mohammad Atif Quamar and Junpei Komiyama},
+  journal={arXiv preprint arXiv:2605.07654},
+  year={2026},
+  url={https://arxiv.org/abs/2605.07654},
+}</code></pre>
+    </div>
+</section>
+<!--End BibTex citation -->
+
+
+  <footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+
+          <p>
+            Built on the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a>, adapted from <a href="https://nerfies.github.io" target="_blank">Nerfies</a>. Licensed under <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">CC BY-SA 4.0</a>.
+          </p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Statcounter tracking code -->
+  
+<!-- You can add a tracker to track page visits by creating an account at statcounter.com -->
+
+    <!-- End of Statcounter Code -->
+
+  <!-- Count-up animation for Big Stats panel. Triggers once when each counter scrolls into view. -->
+  <script>
+    (function () {
+      var counters = document.querySelectorAll('.counter');
+      if (!counters.length || !('IntersectionObserver' in window)) return;
+
+      function animate(el) {
+        var target = parseFloat(el.dataset.target);
+        var decimals = parseInt(el.dataset.decimals || '0', 10);
+        var duration = 1400;
+        var start = performance.now();
+        function step(now) {
+          var t = Math.min((now - start) / duration, 1);
+          var eased = 1 - Math.pow(1 - t, 3);
+          el.textContent = (target * eased).toFixed(decimals);
+          if (t < 1) requestAnimationFrame(step);
+          else el.textContent = target.toFixed(decimals);
+        }
+        requestAnimationFrame(step);
+      }
+
+      var obs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            animate(e.target);
+            obs.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.4 });
+
+      counters.forEach(function (c) { obs.observe(c); });
+    })();
+  </script>
+
+  </body>
+  </html>

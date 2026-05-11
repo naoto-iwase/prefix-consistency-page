@@ -1,0 +1,174 @@
+{
+  "_provenance": {
+    "tag": "A_hmmt2026_p5",
+    "source_dir": "gpt-oss-20b_hmmt_feb_2026_jsonl",
+    "problem_num_1based": 5,
+    "shared_indices": [
+      17,
+      52,
+      126,
+      26,
+      88,
+      92,
+      91,
+      103,
+      57,
+      95,
+      12,
+      77,
+      4,
+      79,
+      53,
+      14
+    ],
+    "mv_only_indices": [
+      65,
+      117,
+      9,
+      20
+    ],
+    "n_total_init": 128,
+    "narrative": "12 shared (PC and MV) + 3 mv_only (MV cost-equivalence). MV picks 450 by 1; PC-WMV picks 1230 by 1.125. The 3 inconsistent shared samples all have regen=1230, so the regen flyer always lands on the gold row.",
+    "cost_equivalence": "PC-WMV @ N=12 with K=1, tau=0.75 costs N*(1+0.25*K) = 15 init-equivalents; cost-matched MV uses 15 init samples (12 shared + 3 mv_only)."
+  },
+  "problem": {
+    "venue": "HMMT February 2026",
+    "problem_id": "Problem #5",
+    "gold": "1230",
+    "prompt_html": "Compute the largest positive integer $ n $ such that\n\n$$\nn \\text{ divides } (\\lfloor \\sqrt{n} \\rfloor)!^{n!} + 450.\n$$"
+  },
+  "answer_classes": [
+    {
+      "key": "1230",
+      "label": "1230",
+      "kind": "gold",
+      "color": "#047857"
+    },
+    {
+      "key": "450",
+      "label": "450",
+      "kind": "mv_top",
+      "color": "#b91c1c"
+    },
+    {
+      "key": "1640",
+      "label": "1640",
+      "kind": "near",
+      "color": "#d97706"
+    },
+    {
+      "key": "_other",
+      "label": "other",
+      "kind": "other",
+      "color": "#94a3b8"
+    }
+  ],
+  "samples": [
+    {
+      "i": 0,
+      "orig": "1230",
+      "regen": "1230",
+      "consistent": true
+    },
+    {
+      "i": 1,
+      "orig": "1640",
+      "regen": "1640",
+      "consistent": true
+    },
+    {
+      "i": 2,
+      "orig": "450",
+      "regen": "1230",
+      "consistent": false
+    },
+    {
+      "i": 3,
+      "orig": "450",
+      "regen": "450",
+      "consistent": true
+    },
+    {
+      "i": 4,
+      "orig": "450",
+      "regen": "450",
+      "consistent": true
+    },
+    {
+      "i": 5,
+      "orig": "1640",
+      "regen": "1230",
+      "consistent": false
+    },
+    {
+      "i": 6,
+      "orig": "1230",
+      "regen": "1230",
+      "consistent": true
+    },
+    {
+      "i": 7,
+      "orig": "1640",
+      "regen": "1640",
+      "consistent": true
+    },
+    {
+      "i": 8,
+      "orig": "450",
+      "regen": "1230",
+      "consistent": false
+    },
+    {
+      "i": 9,
+      "orig": "1230",
+      "regen": "1230",
+      "consistent": true
+    },
+    {
+      "i": 10,
+      "orig": "450",
+      "regen": "450",
+      "consistent": true
+    },
+    {
+      "i": 11,
+      "orig": "1230",
+      "regen": "1230",
+      "consistent": true
+    },
+    {
+      "i": 12,
+      "orig": "1640",
+      "regen": null,
+      "consistent": false,
+      "mv_only": true
+    },
+    {
+      "i": 13,
+      "orig": "450",
+      "regen": null,
+      "consistent": false,
+      "mv_only": true
+    },
+    {
+      "i": 14,
+      "orig": "1230",
+      "regen": null,
+      "consistent": false,
+      "mv_only": true
+    }
+  ],
+  "winners": {
+    "mv": {
+      "answer": "450",
+      "tied_with": [],
+      "is_correct": false,
+      "n_votes": 6
+    },
+    "pcwmv": {
+      "answer": "1230",
+      "is_correct": true,
+      "weight": 4.375
+    }
+  }
+}

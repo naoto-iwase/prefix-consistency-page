@@ -1,0 +1,67 @@
+{
+  "_provenance": {
+    "model": "gpt-oss-20b",
+    "benchmark": "AIME 2025",
+    "problem_num": 23,
+    "regen_setting": "rm25pct (truncate the last 25% of each trace, regenerate from the prefix)",
+    "source_db": "/workspace/database/gpt-oss-20b_aime2025_data/",
+    "snippets": "Verbatim from each trace's final-channel output, abbreviated for display."
+  },
+  "problem": {
+    "venue": "AIME 2025",
+    "problem_id": "Problem #24",
+    "model": "gpt-oss-20b",
+    "gold_answer": "149",
+    "prompt_html": "There are $n$ values of $x$ in the interval $0 < x < 2\\pi$ where $f(x) = \\sin(7\\pi \\cdot \\sin(5x)) = 0$. For $t$ of these $n$ values of $x$, the graph of $y = f(x)$ is tangent to the $x$-axis. Find $n + t$."
+  },
+  "panels": [
+    {
+      "kind": "correct",
+      "label": "Consistent trace",
+      "gen_idx": 51,
+      "truncate_after_line": 2,
+      "original": {
+        "answer": "149",
+        "is_correct": true,
+        "lines": [
+          "<span class=\"line-text\">For each <i>k</i>&#8201;∈&#8201;{−7,&hairsp;…,&hairsp;7}, sin(5<i>x</i>)&#8201;=&#8201;<i>k</i>/7 gives 10 solutions per non-extremal&nbsp;<i>k</i>.</span>",
+          "<span class=\"line-text\">Endpoints excluded at <i>k</i>&#8201;=&#8201;0 (only 9 solutions); <i>k</i>&#8201;=&#8201;±7 give 5 each.</span>",
+          "<span class=\"line-text\"><i>n</i> = 9 + 120 + 10 = <b>139</b>.</span>",
+          "<span class=\"line-text\">Tangency requires cos(5<i>x</i>)&#8201;=&#8201;0, satisfied only at <i>k</i>&#8201;=&#8201;±7. So <i>t</i>&#8201;=&#8201;<b>10</b>.</span>",
+          "<span class=\"line-text\"><i>n</i>&#8201;+&#8201;<i>t</i>&#8201;=&#8201;139 + 10 = </span><span class=\"boxed\">149</span>"
+        ]
+      },
+      "regens": [
+        {"answer": "149", "matches_orig": true, "line": "<i>n</i>&#8201;+&#8201;<i>t</i>&#8201;= 139 + 10 = <span class=\"boxed\">149</span>"},
+        {"answer": "149", "matches_orig": true, "line": "<i>t</i> = 5 + 5 = 10, so <i>n</i>&#8201;+&#8201;<i>t</i>&#8201;= <span class=\"boxed\">149</span>"},
+        {"answer": "149", "matches_orig": true, "line": "<i>t</i> = 5 + 5 = 10, <i>n</i>&#8201;+&#8201;<i>t</i>&#8201;= 139 + 10 = <span class=\"boxed\">149</span>"}
+      ],
+      "pc_match": 4,
+      "pc_total": 4
+    },
+    {
+      "kind": "wrong",
+      "label": "Inconsistent trace",
+      "gen_idx": 5,
+      "truncate_after_line": 2,
+      "original": {
+        "answer": "160",
+        "is_correct": false,
+        "lines": [
+          "<span class=\"line-text\">13 integers with |<i>m</i>|&#8201;&lt;&#8201;1 each give 10 solutions: 13&#8201;×&#8201;10 = <b>130</b>.</span>",
+          "<span class=\"line-text\"><i>m</i>&#8201;=&#8201;±7 give 5&#8201;+&#8201;5&#8201;=&#8201;10 more.</span>",
+          "<span class=\"line-text\"><i>n</i>&#8201;=&#8201;130 + 10 = <b>140</b>.&nbsp;<span class=\"err\">(missed endpoint exclusion at <i>k</i>&#8201;=&#8201;0)</span></span>",
+          "<span class=\"line-text\"><i>t</i>&#8201;=&#8201;5&#8201;+&#8201;5&#8201;=&#8201;10 for&nbsp;<i>m</i>&#8201;=&#8201;7, and 10 for&nbsp;<i>m</i>&#8201;=&#8201;−7, total <b>20</b>.&nbsp;<span class=\"err\">(double-counted)</span></span>",
+          "<span class=\"line-text\"><i>n</i>&#8201;+&#8201;<i>t</i>&#8201;= 140 + 20 = </span><span class=\"boxed\">160</span>"
+        ]
+      },
+      "regens": [
+        {"answer": "150", "matches_orig": false, "line": "<i>t</i>&#8201;=&#8201;10, <i>n</i>&#8201;+&#8201;<i>t</i>&#8201;= 140 + 10 = <span class=\"boxed\">150</span>"},
+        {"answer": "160", "matches_orig": true, "line": "<i>t</i>&#8201;=&#8201;20, <i>n</i>&#8201;+&#8201;<i>t</i>&#8201;= 140 + 20 = <span class=\"boxed\">160</span>"},
+        {"answer": "150", "matches_orig": false, "line": "&ldquo;a slight oversight&hellip; correct count is 10&rdquo; → <i>n</i>&#8201;+&#8201;<i>t</i>&#8201;= <span class=\"boxed\">150</span>"}
+      ],
+      "pc_match": 2,
+      "pc_total": 4
+    }
+  ]
+}

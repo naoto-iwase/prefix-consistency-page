@@ -1,0 +1,382 @@
+/* Correct vs Wrong trace section: prefix-consistency demo.
+   Real gpt-oss-20b output on AIME 2025 #24. */
+
+.cvw-section {
+  padding: 2rem 1.25rem 2.5rem;
+  background: white;
+}
+
+.cvw-problem {
+  max-width: 880px;
+  margin: 0 auto 1.4rem;
+  padding: 1rem 1.2rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.cvw-problem .problem-meta {
+  font-size: 0.78rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  margin-bottom: 0.45rem;
+}
+.cvw-problem .problem-meta .gold-pill {
+  display: inline-block;
+  margin-left: 0.6rem;
+  padding: 0.05rem 0.55rem;
+  background: #ecfdf5;
+  color: #047857;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+  font-size: 0.74rem;
+  text-transform: none;
+}
+.cvw-problem .problem-text {
+  font-size: 0.96rem;
+  line-height: 1.55;
+  color: #0f172a;
+}
+.cvw-problem .nb { white-space: nowrap; }
+
+.cvw-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+@media (max-width: 880px) {
+  .cvw-grid { grid-template-columns: 1fr; }
+}
+
+.cvw-panel {
+  background: white;
+  border-radius: 14px;
+  padding: 1.1rem 1.15rem 1.25rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  position: relative;
+}
+.cvw-panel.correct { border-color: #bbf7d0; }
+.cvw-panel.wrong   { border-color: #fecaca; }
+
+.cvw-panel .panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 0.55rem;
+}
+.cvw-panel .panel-label {
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+.cvw-panel.correct .panel-label { color: #047857; }
+.cvw-panel.wrong   .panel-label { color: #b91c1c; }
+
+/* Original trace box */
+.trace-box {
+  border-radius: 9px;
+  padding: 0.6rem 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: #1e293b;
+  font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+.cvw-panel.correct .trace-box { background: #f0fdf4; border-color: #bbf7d0; }
+.cvw-panel.wrong   .trace-box { background: #fef7f7; border-color: #fecaca; }
+
+.trace-box .line {
+  display: block;
+  min-height: 1.55em;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+}
+.trace-box .line.streaming,
+.trace-box .line.done {
+  opacity: 1;
+  transform: translateY(0);
+}
+.trace-box .line.streaming::after {
+  content: "";
+  display: inline-block;
+  width: 0.45em;
+  height: 1em;
+  vertical-align: -0.15em;
+  background: currentColor;
+  margin-left: 1px;
+  animation: cvw-caret 1s steps(2, jump-none) infinite;
+  opacity: 0.6;
+}
+@keyframes cvw-caret {
+  50% { opacity: 0.05; }
+}
+
+.trace-box .err {
+  font-size: 0.78em;
+  color: #b91c1c;
+  font-style: italic;
+}
+
+/* In-trace cut indicator. Lives between the kept prefix and the discarded
+   suffix. Initially zero-height so the trace reads as a continuous block;
+   when JS toggles .armed it expands and pushes the lines below it down. */
+.trace-box .cut-line {
+  display: block;
+  position: relative;
+  height: 0;
+  margin: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: height 0.4s ease, margin 0.4s ease, opacity 0.3s ease 0.05s;
+}
+.trace-box .cut-line.armed {
+  height: 22px;
+  margin: 0.45rem 0;
+  opacity: 1;
+}
+.trace-box .cut-line::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  border-top: 1.5px dashed #94a3b8;
+}
+.trace-box .cut-line .cut-icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.55rem;
+  background: inherit;
+}
+.trace-box .cut-line .cut-glyph { font-size: 0.95rem; line-height: 1; }
+.trace-box .cut-line .cut-label {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+/* Match the trace-box panel-tinted background so the cut-icon "breaks" the
+   dashed line cleanly (without showing the page bg through). */
+.cvw-panel.correct .trace-box .cut-line .cut-icon { background: #f0fdf4; }
+.cvw-panel.wrong   .trace-box .cut-line .cut-icon { background: #fef7f7; }
+
+/* Lines that fall in the discarded suffix. The .discarded class is applied
+   to the line at animation time. Fade is scoped to the inner .line-text
+   wrapper so the boxed final answer (a sibling of .line-text) keeps its
+   color, since prefix consistency reuses that answer in the tally. */
+.trace-box .line.discarded .line-text {
+  opacity: 0.35;
+  text-decoration: line-through;
+  text-decoration-color: #94a3b8;
+  transition: opacity 0.5s ease;
+}
+
+/* Boxed final answer (matches LaTeX \boxed{} look) */
+.boxed {
+  display: inline-block;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  padding: 0.05em 0.45em;
+  font-weight: 700;
+  font-feature-settings: "tnum" 1;
+  margin: 0 0.05em;
+}
+.cvw-panel.correct .trace-box .boxed { color: #047857; }
+.cvw-panel.wrong   .trace-box .boxed { color: #b91c1c; }
+
+/* Truncate divider */
+.truncate-divider {
+  position: relative;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.2rem 0;
+}
+.truncate-divider::before,
+.truncate-divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1.5px dashed #94a3b8;
+  margin: 0 0.5rem;
+  opacity: 0;
+  transform: scaleX(0);
+  transition: opacity 0.4s ease-out, transform 0.5s ease-out;
+}
+.truncate-divider.armed::before,
+.truncate-divider.armed::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+.truncate-divider .truncate-label {
+  font-size: 0.74rem;
+  color: #64748b;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: white;
+  padding: 0 0.6rem;
+  opacity: 0;
+  transition: opacity 0.4s ease-out 0.2s;
+}
+.truncate-divider.armed .truncate-label { opacity: 1; }
+
+/* Regen rows */
+.regens {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.regen-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.7rem;
+  background: #fcfcfd;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+.regen-row.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.regen-row .regen-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.regen-row .regen-content {
+  color: #334155;
+}
+
+/* boxed answer color encodes match-with-original:
+   match -> panel theme color, diff -> muted gray. */
+.cvw-panel.correct .regen-row.match .boxed { color: #047857; border-color: #047857; }
+.cvw-panel.wrong   .regen-row.match .boxed { color: #b91c1c; border-color: #b91c1c; }
+.regen-row.diff    .boxed { color: #94a3b8; border-color: #94a3b8; }
+
+/* PC tally bar */
+.pc-tally {
+  margin-top: 0.3rem;
+  padding: 0.65rem 0.8rem;
+  background: linear-gradient(180deg, #fafbfc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.88rem;
+}
+.pc-tally .pc-label {
+  font-weight: 600;
+  color: #334155;
+}
+.pc-tally .pc-bar-track {
+  flex: 1;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0 0.6rem;
+}
+.pc-tally .pc-bar-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  /* Width is driven per-frame from JS (correct_vs_wrong.js: tallyPanel) so it stays in sync
+     with the readout counter; no CSS transition here on purpose. */
+}
+.cvw-panel.correct .pc-bar-fill { background: linear-gradient(90deg, #34d399, #047857); }
+.cvw-panel.wrong   .pc-bar-fill { background: linear-gradient(90deg, #fb7185, #b91c1c); }
+.pc-tally .pc-readout {
+  font-weight: 700;
+  font-feature-settings: "tnum" 1;
+  font-size: 1rem;
+  color: #0f172a;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.pc-tally .pc-readout.visible { opacity: 1; }
+.cvw-panel.correct .pc-tally .pc-readout { color: #047857; }
+.cvw-panel.wrong   .pc-tally .pc-readout { color: #b91c1c; }
+
+/* Replay control */
+.cvw-controls {
+  margin-top: 1.4rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.7rem;
+}
+.cvw-replay {
+  appearance: none;
+  background: #0f172a;
+  color: white;
+  border: 0;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.cvw-replay:hover { background: #1e293b; }
+.cvw-replay:active { transform: translateY(1px); }
+.cvw-replay svg { width: 0.9rem; height: 0.9rem; }
+
+.cvw-footer {
+  text-align: center;
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: 1rem;
+}
+.cvw-footer code {
+  background: #f1f5f9;
+  padding: 0.05em 0.35em;
+  border-radius: 3px;
+  font-size: 0.95em;
+}
+
+/* Reduced motion: skip animations, show end state */
+@media (prefers-reduced-motion: reduce) {
+  .trace-box .line,
+  .regen-row,
+  .truncate-divider::before,
+  .truncate-divider::after,
+  .truncate-divider .truncate-label {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .trace-box .line.streaming::after { display: none; }
+}

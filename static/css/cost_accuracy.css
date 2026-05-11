@@ -1,0 +1,201 @@
+/* Cost-accuracy live: the 21x speedup, draggable.
+   Real gpt-oss-120b on FrontierScience-Olympiad. */
+
+.ca-section {
+  padding: 2rem 1.25rem 2.5rem;
+  background: white;
+}
+
+.ca-headline {
+  text-align: center;
+  font-size: 1.05rem;
+  color: #0f172a;
+  margin: 0 auto 1.6rem;
+  max-width: 720px;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+.ca-headline.visible { opacity: 1; }
+.ca-headline strong { font-weight: 700; }
+.ca-headline #ca-ratio,
+.ca-headline #ca-pct {
+  color: #006d2c;
+  font-variant-numeric: tabular-nums;
+}
+
+.ca-panel {
+  max-width: 920px;
+  margin: 0 auto;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+  padding: 0.9rem 0.95rem 1rem;
+}
+
+.ca-subtitle {
+  text-align: center;
+  font-size: 0.92rem;
+  color: #475569;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.01em;
+}
+
+.ca-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  touch-action: none;
+  cursor: ns-resize;
+}
+
+/* Axis bones */
+.ca-svg .ca-axis-line {
+  stroke: #94a3b8;
+  stroke-width: 1;
+  fill: none;
+}
+.ca-svg .ca-grid-line {
+  stroke: #e2e8f0;
+  stroke-width: 1;
+  fill: none;
+}
+.ca-svg .ca-grid-line.minor { stroke: #f1f5f9; }
+.ca-svg .ca-tick-label {
+  fill: #475569;
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+}
+.ca-svg .ca-axis-label {
+  fill: #334155;
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Curves */
+.ca-svg .ca-curve {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ca-svg .ca-band {
+  stroke: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.ca-svg .ca-band.visible { opacity: 0.12; }
+
+/* Errorbar markers (AC, ESC sweeps) */
+.ca-svg .ca-marker-group { opacity: 0; transition: opacity 0.5s ease; }
+.ca-svg .ca-marker-group.visible { opacity: 1; }
+.ca-svg .ca-marker-dot {
+  stroke: white;
+  stroke-width: 0.8;
+}
+.ca-svg .ca-marker-err {
+  stroke: #1f2937;
+  stroke-width: 0.8;
+  fill: none;
+}
+
+/* Target dotted line and handle */
+.ca-svg .ca-target-line {
+  stroke: #475569;
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  fill: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.ca-svg .ca-target-line.visible { opacity: 1; }
+.ca-svg .ca-target-handle {
+  fill: white;
+  stroke: #475569;
+  stroke-width: 1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.ca-svg .ca-target-handle.visible { opacity: 1; }
+.ca-svg .ca-target-handle-glyph {
+  fill: #475569;
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.ca-svg .ca-target-handle-glyph.visible { opacity: 1; }
+.ca-svg .ca-target-readout {
+  fill: #334155;
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.ca-svg .ca-target-readout.visible { opacity: 1; }
+
+/* Vertical envelope-crossing drops */
+.ca-svg .ca-cross-line {
+  stroke-width: 1;
+  fill: none;
+  stroke-dasharray: 5 4;
+  opacity: 0.7;
+}
+.ca-svg .ca-cross-dot {
+  stroke: white;
+  stroke-width: 0.9;
+}
+.ca-svg .ca-cross-label-bg {
+  fill: white;
+  fill-opacity: 0.92;
+  stroke: none;
+  rx: 3;
+  ry: 3;
+}
+.ca-svg .ca-cross-label {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  font-variant-numeric: tabular-nums;
+  text-anchor: middle;
+}
+
+/* Legend strip below the plot */
+.ca-legend {
+  margin-top: 0.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem 0.95rem;
+  font-size: 0.78rem;
+  color: #334155;
+}
+.ca-legend-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+.ca-legend-swatch {
+  display: inline-block;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  transform: translateY(-3px);
+}
+.ca-legend-swatch.marker {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translateY(1px);
+  border: 1.4px solid white;
+  box-shadow: 0 0 0 1px currentColor;
+}
+.ca-legend-name { font-weight: 600; color: #0f172a; }
+.ca-legend-cite { color: #64748b; font-size: 0.74rem; margin-left: 0.15rem; }
+
+@media (max-width: 720px) {
+  .ca-section { padding: 1.5rem 0.75rem 2rem; }
+  .ca-panel { padding: 0.7rem 0.55rem 0.85rem; }
+}

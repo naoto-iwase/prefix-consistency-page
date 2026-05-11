@@ -1,0 +1,487 @@
+/* MV vs PC-WMV section: PC-WMV beats Standard MV at the per-problem level.
+   gpt-oss-20b on AIME 2025 #14 (gold=60). N=16 samples, tau=0.75, K=1. */
+
+.mvpc-section {
+  padding: 2rem 1.25rem 2.5rem;
+  background: white;
+}
+.mvpc-problem {
+  max-width: 880px;
+  margin: 0 auto 1.4rem;
+  padding: 1rem 1.2rem;
+  background: #fbfcfe;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.mvpc-problem .problem-meta {
+  font-size: 0.78rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  margin-bottom: 0.45rem;
+}
+.mvpc-problem .problem-meta .gold-pill {
+  display: inline-block;
+  margin-left: 0.6rem;
+  padding: 0.05rem 0.55rem;
+  background: #ecfdf5;
+  color: #047857;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+  font-size: 0.74rem;
+  text-transform: none;
+}
+.mvpc-problem .problem-text {
+  font-size: 0.94rem;
+  line-height: 1.55;
+  color: #0f172a;
+}
+.mvpc-problem .nb { white-space: nowrap; }
+
+/* Sample stream: 16 dots */
+.mvpc-stream {
+  max-width: 880px;
+  margin: 0 auto 1rem;
+}
+.mvpc-stream-label {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.mvpc-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+.mvpc-dot {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--dot-color, #94a3b8);
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.3s ease, transform 0.3s ease, filter 0.3s ease;
+  position: relative;
+  /* not-self-consistent: more transparent (washed out) */
+  --dot-fade: 0.4;
+}
+.mvpc-dot.consistent {
+  --dot-fade: 1.0;
+  box-shadow: 0 0 0 2px white, 0 0 0 3.5px var(--dot-color);
+}
+.mvpc-dot.lit {
+  opacity: var(--dot-fade);
+  transform: scale(1);
+}
+.mvpc-dot.consistent.lit {
+  opacity: 1;
+}
+
+/* Cost-equivalence extras for Standard MV: smaller, no possible ring. They
+   stay hidden (opacity 0 from .mvpc-dot) until lit, just like regular dots. */
+.mvpc-dot.mv-only {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+.mvpc-dot.mv-only.lit { opacity: 0.65; }
+
+/* Visual divider between regular samples and the cost-equivalence extras.
+   Hidden until the animation reaches the first mv_only sample, at which
+   point JS adds .revealed to fade it (and its label) in. */
+.mvpc-dot-divider {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0.4rem 0 0.2rem;
+  height: 1.5rem;
+  border-left: 1.5px dashed #cbd5e1;
+  padding-left: 0.5rem;
+  position: relative;
+  opacity: 0;
+  transform: scaleY(0.55);
+  transform-origin: center;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.mvpc-dot-divider.revealed {
+  opacity: 1;
+  transform: scaleY(1);
+}
+.mvpc-dot-divider .divider-label {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-style: italic;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Currently-processing dot: scale up + circular drop-shadow halo. We use
+   filter:drop-shadow (which follows the dot's circular shape) instead of
+   box-shadow so the halo never reads as a ring -- the ring shape is
+   reserved for self-consistent dots (see .mvpc-dot.consistent). */
+.mvpc-dot.active-step {
+  transform: scale(1.32);
+  filter: drop-shadow(0 0 6px var(--dot-color));
+  z-index: 1;
+}
+.mvpc-dot[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f172a;
+  color: white;
+  padding: 0.3rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-family: ui-monospace, "SF Mono", "JetBrains Mono", monospace;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.mvpc-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-top: 0.75rem;
+  font-size: 0.78rem;
+  color: #475569;
+}
+.mvpc-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.mvpc-legend-swatch {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+}
+/* Ringed swatch in the legend. Mirrors .mvpc-dot.consistent so the
+   reader can match the legend symbol to the actual ringed dots above. */
+.mvpc-legend-swatch.ring {
+  background: #64748b;
+  box-shadow: 0 0 0 1.2px white, 0 0 0 2.2px #64748b;
+}
+.mvpc-legend-hint {
+  margin-left: 0.4rem;
+  padding-left: 0.9rem;
+  border-left: 1px solid #cbd5e1;
+  color: #475569;
+}
+.mvpc-legend-hint .hint-paren {
+  color: #94a3b8;
+}
+
+/* Per-step stepper card */
+.mvpc-stepper {
+  max-width: 880px;
+  margin: 1.4rem auto 0;
+  padding: 0.85rem 1rem 0.95rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  min-height: 4rem;
+  opacity: 0.55;
+  transition: opacity 0.3s ease;
+}
+.mvpc-stepper.active { opacity: 1; }
+
+.mvpc-stepper .step-counter {
+  font-size: 0.78rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+  font-feature-settings: "tnum" 1;
+  min-height: 0.9em;
+}
+.mvpc-stepper .step-pair {
+  font-size: 0.95rem;
+  color: #0f172a;
+  margin-bottom: 0.45rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  min-height: 1.4rem;
+}
+.mvpc-stepper .step-side {
+  font-feature-settings: "tnum" 1;
+}
+.mvpc-stepper .step-arrow {
+  color: #cbd5e1;
+  font-weight: 700;
+}
+.mvpc-stepper .step-tag {
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+.mvpc-stepper .step-tag-eq {
+  background: #ecfdf5;
+  color: #047857;
+}
+.mvpc-stepper .step-tag-neq {
+  background: #f1f5f9;
+  color: #64748b;
+}
+/* Inline answer chip used inside the stepper. Inherits color from class
+   via the --chip-color custom property. */
+.step-chip {
+  display: inline-block;
+  padding: 0.05em 0.45em;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--chip-color) 12%, white);
+  color: var(--chip-color);
+  border: 1px solid color-mix(in srgb, var(--chip-color) 35%, white);
+  font-weight: 700;
+  font-feature-settings: "tnum" 1;
+  margin: 0 0.05em;
+}
+@supports not (background: color-mix(in srgb, red 50%, white)) {
+  /* Fallback for browsers without color-mix: solid soft fill */
+  .step-chip {
+    background: #f8fafc;
+    border-color: var(--chip-color);
+  }
+}
+
+/* Two voting panels */
+.mvpc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.1rem;
+  max-width: 1100px;
+  margin: 1.6rem auto 0;
+}
+@media (max-width: 880px) {
+  .mvpc-grid { grid-template-columns: 1fr; }
+}
+
+.vote-panel {
+  background: #fbfcfe;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem 1.1rem 1.15rem;
+  position: relative;
+}
+.vote-panel.mv     { border-color: #fecaca; }
+.vote-panel.pcwmv  { border-color: #bbf7d0; }
+.vote-panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+.vote-panel-title {
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+.vote-panel.mv    .vote-panel-title { color: #b91c1c; }
+.vote-panel.pcwmv .vote-panel-title { color: #047857; }
+.vote-panel-rule {
+  font-size: 0.74rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.vote-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.vote-row {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr 4rem;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.86rem;
+}
+.vote-row .vote-key {
+  font-weight: 700;
+  font-feature-settings: "tnum" 1;
+  color: var(--row-color, #1e293b);
+  letter-spacing: -0.01em;
+  text-align: right;
+  padding-right: 0.2rem;
+}
+
+.vote-bar-track {
+  height: 14px;
+  background: #f1f5f9;
+  border-radius: 7px;
+  overflow: hidden;
+  position: relative;
+}
+.vote-bar-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: 7px;
+  background: var(--row-color, #94a3b8);
+  /* width is driven per-frame from JS */
+}
+.vote-row .vote-val {
+  font-feature-settings: "tnum" 1;
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+/* When a row receives a vote/weight in the current step, briefly highlight it
+   in the answer's own color. The row exposes --row-color which doubles as
+   the bar fill color, so the pulse and the bar always agree. */
+.vote-row.flashing {
+  animation: mvpc-row-pulse 0.85s ease-out;
+}
+@keyframes mvpc-row-pulse {
+  0%   { box-shadow: 0 0 0 0 var(--row-color); }
+  20%  { box-shadow: 0 0 0 5px color-mix(in srgb, var(--row-color) 22%, transparent); }
+  100% { box-shadow: 0 0 0 0 var(--row-color); }
+}
+@supports not (background: color-mix(in srgb, red 50%, white)) {
+  @keyframes mvpc-row-pulse {
+    0%   { box-shadow: 0 0 0 0 var(--row-color); }
+    20%  { box-shadow: 0 0 0 5px var(--row-color); }
+    100% { box-shadow: 0 0 0 0 var(--row-color); }
+  }
+}
+
+.vote-residual {
+  margin-top: 0.55rem;
+  font-size: 0.78rem;
+  color: #64748b;
+  font-style: italic;
+  padding-left: 0.2rem;
+  opacity: 0;
+  transform: translateY(3px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.vote-residual.shown {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.vote-pick {
+  margin-top: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed #e2e8f0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.vote-pick.shown { opacity: 1; transform: translateY(0); }
+.vote-panel.mv    .vote-pick { color: #b91c1c; }
+.vote-panel.pcwmv .vote-pick { color: #047857; }
+.vote-pick .pick-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: white;
+}
+.vote-panel.mv    .vote-pick .pick-symbol { background: #b91c1c; }
+.vote-panel.pcwmv .vote-pick .pick-symbol { background: #047857; }
+.vote-pick .pick-tied {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #64748b;
+  margin-left: 0.35rem;
+}
+
+.mvpc-controls {
+  margin-top: 1.4rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.7rem;
+}
+.mvpc-replay {
+  appearance: none;
+  background: #0f172a;
+  color: white;
+  border: 0;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.mvpc-replay:hover { background: #1e293b; }
+.mvpc-replay svg { width: 0.9rem; height: 0.9rem; }
+
+.mvpc-footer {
+  text-align: center;
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: 1rem;
+}
+.mvpc-footer code {
+  background: #f1f5f9;
+  padding: 0.05em 0.35em;
+  border-radius: 3px;
+}
+
+/* Flying delta badge: spawned at the orig/regen chip in the stepper,
+   animates to the corresponding row in the voting panel. The badge takes
+   the answer's color via --flyer-color, set inline by JS. */
+.vote-flyer {
+  position: fixed;
+  font-size: 0.92rem;
+  font-weight: 700;
+  font-feature-settings: "tnum" 1;
+  padding: 0.2rem 0.55rem;
+  border-radius: 8px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+  will-change: transform, opacity;
+  background: color-mix(in srgb, var(--flyer-color) 14%, white);
+  color: var(--flyer-color);
+  border: 1.5px solid color-mix(in srgb, var(--flyer-color) 45%, white);
+}
+@supports not (background: color-mix(in srgb, red 50%, white)) {
+  .vote-flyer {
+    background: white;
+    color: var(--flyer-color);
+    border: 1.5px solid var(--flyer-color);
+  }
+}
+
+/* Reduced motion: instant end state */
+@media (prefers-reduced-motion: reduce) {
+  .mvpc-dot,
+  .vote-pick {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
