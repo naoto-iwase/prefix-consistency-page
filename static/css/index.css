@@ -213,6 +213,30 @@ body {
   margin-right: 0.5rem;
 }
 
+.acceptance-news {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.acceptance-news-label {
+  color: var(--primary-color);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.acceptance-news-text {
+  padding-left: 0.75rem;
+  border-left: 1px solid #cbd5e1;
+}
+
 .publication-banner img {
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-lg);
@@ -721,6 +745,11 @@ code {
     width: 100%;
     justify-content: center;
   }
+
+  .acceptance-news {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+  }
 }
 
 /* Tablet Responsive */
@@ -775,6 +804,4 @@ a:focus {
     box-shadow: none !important;
   }
 }
-
-
 
